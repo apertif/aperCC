@@ -154,7 +154,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
         flag.basedir = base_dir
         flag.fluxcal = ''
         flag.polcal = ''
-        flag.target = name_cal.upper().strip().split('_')[0] + '.MS
+        flag.target = name_cal.upper().strip().split('_')[0] + '.MS'
         flag.beam = "{:02d}".format(beam_list[0])
         try:
             flag.go()
