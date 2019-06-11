@@ -53,7 +53,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
 
     if not steps:
         steps = ['prepare', 'preflag', 'bpass_compare',
-            'gain_comare', 'bpass_compare_obs', 'gain_compare_obs']
+                 'gain_comare', 'bpass_compare_obs', 'gain_compare_obs']
     # check that preflag is in it if prepare is run
     else:
         if 'prepare' in steps and not 'preflag' in steps:
@@ -150,7 +150,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     if 'preflag' in steps:
         # Flag fluxcal (pretending it's a target)
         # needs to be changed for parallel preflag and make it a loop
-        flag = preflag(filename=configfilename)
+        flag = preflag(filename=None)
         flag.basedir = base_dir
         flag.fluxcal = ''
         flag.polcal = ''
@@ -163,14 +163,14 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
             logger.exception(e)
         else:
             logger.info("Flagging data of calibrators ... Done ({0}s)".format(
-                time() - start_time_flag")
+                time() - start_time_flag))
     else:
         logger.info("Skipping running preflag for calibrators")
 
     # Running Bandbpass comparison
     if 'bpass_compare' in steps:
 
-        start_time_prepare=time()
+        start_time_prepare = time()
 
         logger.info("Comparing bandpass")
 
@@ -184,7 +184,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     # Running Bandbpass comparison
     if 'gain_compare' in steps:
 
-        start_time_gain=time()
+        start_time_gain = time()
 
         logger.info("Comparing gain solutions")
 
@@ -198,21 +198,21 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     # Running Bandbpass comparison between observations
     if 'bpass_compare_obs' in steps:
 
-        start_time_bandpass=time()
+        start_time_bandpass = time()
 
         logger.info("Comparing banpdass solutions across observations")
 
         logger.info("#### Doing nothing here yet ####")
 
         logger.info("Comparing banpdass solutions across observations ... Done ({})".format(
-            time() - start_time_bandpass)
+            time() - start_time_bandpass))
     else:
         logger.info("Skipping comparing banpdass solutions across observations")
 
     # Running Bandbpass comparison between observations
     if 'bpass_compare_obs' in steps:
 
-        start_time_gain=time()
+        start_time_gain = time()
 
         logger.info("Comparing banpdass solutions across observations")
 
