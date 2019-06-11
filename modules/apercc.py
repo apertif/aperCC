@@ -24,9 +24,11 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     The function can get the data from ALTA and flags them using the Apercal modules
     prepare and preflag. It compares the bandpass solutions and gain factors between beams
     and between observations of the same calibrators
+    The different steps can be selected individually.
 
     Example:
         scanid, source name, beam: [190108926, '3C147_36', 36]
+        steps: ['prepare', 'preflag', 'bpass_compare', 'gain_comare', 'bpass_compare_obs', 'gain_compare_obs']
         function cal: apercc([[190108926, '3C147_36', 36], [190108927, '3C147_37', 37])
 
     Args:
@@ -50,7 +52,8 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     start_time = time()
 
     if not steps:
-        steps = ['prepare', 'preflag', 'bpass_compare', 'gain_comare', 'bpass_compare_obs', 'gain_compare_obs']
+        steps = ['prepare', 'preflag', 'bpass_compare',
+            'gain_comare', 'bpass_compare_obs', 'gain_compare_obs']
     # check that preflag is in it if prepare is run
     else:
         if 'prepare' in steps and not 'preflag' in steps:
