@@ -7,7 +7,7 @@ __version__ = "0.1"
 import numpy as np
 import os
 import sys
-from scandata import ScanData
+#from scandata import ScanData
 from apercal.libs.lib import lib
 from time import time
 import logging
