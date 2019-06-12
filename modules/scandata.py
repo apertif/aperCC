@@ -142,7 +142,7 @@ class ScanData(object):
         """
 
         # if no beam is specified, return a list of tables
-        if beam_nr is not None:
+        if beam_nr is None:
             logging.info("Getting a list of bandpass tables")
 
             # empty table to be filled
