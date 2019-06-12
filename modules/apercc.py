@@ -8,7 +8,7 @@ import numpy as np
 import os
 import sys
 #from scandata import ScanData
-from apercal.libs.lib import lib
+import apercal.libs.lib as lib
 from time import time
 import logging
 from apercal.modules.prepare import prepare
