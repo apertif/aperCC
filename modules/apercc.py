@@ -13,6 +13,7 @@ from time import time
 import logging
 from apercal.modules.prepare import prepare
 from apercal.modules.preflag import preflag
+from apercal.subs.managefiles import director
 
 
 def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
@@ -158,6 +159,8 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
         flag.target = name_cal.upper().strip().split('_')[0] + '.MS'
         flag.beam = "{:02d}".format(beam_list[0])
         try:
+            director(flag, 'rm', base_dir + '/param.npy',
+                     ignore_nonexistent=True)
             flag.go()
         except Exception as e:
             logger.warning("Preflag failed")
