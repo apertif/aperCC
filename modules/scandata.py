@@ -71,6 +71,7 @@ class ScanData(object):
             logging.warning("No beam directories found")
         else:
             self.dir_list = np.array(self.dir_list)
+            self.dir_list.sort()
 
         self.beam_list = np.array([os.path.basename(dir)
                                    for dir in self.dir_list])
