@@ -125,7 +125,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
             prep.target = name_cal.upper().strip().split('_')[0] + '.MS'
             prep.prepare_target_beams = str(beamnr_cal)
             prep.prepare_date = str(task_id_cal)[:6]
-            prep.prepare_obsnum_target = task_id_cal[-3:]
+            prep.prepare_obsnum_target = str(task_id_cal)[-3:]
             try:
                 prep.go()
             except Exception as e:
