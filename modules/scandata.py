@@ -28,7 +28,7 @@ This specifies the location of all data, assuming setup of automatic pipeline
 
 
 class ScanData(object):
-    def __init__(self, task_id, source_name, base_dir):
+    def __init__(self, task_id, source_name, base_dir=None):
         """
         Initialize with task id and source name
         and place holders for phase and amplitude
@@ -37,9 +37,19 @@ class ScanData(object):
             source_name (str): name of source, e.g. "3C48"
             base_dir (str): name of data directory 
         """
+
+        # first check what happili node on
+        self.hostname = os.uname()[1]
+
+        # main task id
         self.task_id = task_id
+
+        # name of calibrator
         self.source_name = source_name
-        self.base_dir = base_dir
+
+        if base_dir is None:
+            self.base_dir = '/data/apertif/'
+
         #self.imagepathsuffix = ""
         # Fix to not include .MS no matter what
         if self.source_name[-2:] == 'MS':
@@ -47,8 +57,13 @@ class ScanData(object):
 
         # also get a directory list and beamlist
         self.task_id_path = os.path.join(self.base_dir, str(self.task_id))
-        self.dir_list = glob.glob(
-            "{0}/[0-3][0-9]".format(self.task_id_path))
+
+        if self.hostname == 'happili-01' and base_dir is None:
+            self.dir_list = glob.glob(
+                "{0}/[0-3][0-9]".format(self.task_id_path.replace("/data/", "/data[0-4]/")))
+        else:
+            self.dir_list = glob.glob(
+                "{0}/[0-3][0-9]".format(self.task_id_path.replace("/data/", "/data[0-4]/")))
 
         if len(self.dir_list) == 0:
             logging.warning("No beam directories found")
@@ -58,9 +73,6 @@ class ScanData(object):
 
         if len(self.beam_list) == 0:
             logging.warning("No beams found")
-        # first check what happili node on
-        # if not happili-01, print a warning and only search locally
-        self.hostname = os.uname()[1]
 
         # suffix used for the name of the gaintable
         self.gaintable_suffix = "G1ap"
@@ -95,7 +107,7 @@ class ScanData(object):
         """
 
         # if no beam is specified, return a list of tables
-        if not beam_nr:
+        if beam_nr is None:
             logging.info("Getting a list of gaintables")
 
             # empty table to be filled
@@ -119,8 +131,14 @@ class ScanData(object):
                 return gaintable_list
 
         else:
-            gaintable = "{0}/{1:02d}/raw/{2}.{3}".format(
-                self.task_id_path, beam_nr, self.source_name, self.gaintable_suffix)
+            # get the directory corresponding to the beam:
+            data_dir = self.dir_list[np.where(
+                self.beam_list == '{0:02d}'.format(beam_nr))]
+            gaintable = "{0}/raw/{1}.{2}".format(
+                data_dir, self.source_name, self.gaintable_suffix)
+
+            # gaintable = "{0}/{1:02d}/raw/{2}.{3}".format(
+            #     self.task_id_path, beam_nr, self.source_name, self.gaintable_suffix)
 
             if os.path.isdir(gaintable):
                 logging.info("Found gaintable {}".format(gaintable))
@@ -142,7 +160,7 @@ class ScanData(object):
         """
 
         # if no beam is specified, return a list of tables
-        if not beam_nr:
+        if beam_nr is None:
             logging.info("Getting a list of bandpass tables")
 
             # empty table to be filled
@@ -166,8 +184,14 @@ class ScanData(object):
                 return bpass_list
 
         else:
-            bpass = "{0}/{1:02d}/raw/{2}.{3}".format(
-                self.task_id_path, beam_nr, self.source_name, self.bpass_suffix)
+            # get the directory corresponding to the beam:
+            data_dir = self.dir_list[np.where(
+                self.beam_list == '{0:02d}'.format(beam_nr))]
+
+            bpass = "{0}/raw/{1}.{2}".format(
+                data_dir, self.source_name, self.bpass_suffix)
+            # bpass = "{0}/{1:02d}/raw/{2}.{3}".format(
+            #     self.task_id_path, beam_nr, self.source_name, self.bpass_suffix)
 
             if os.path.isdir(bpass):
                 logging.info("Found bandpass table {}".format(bpass))
