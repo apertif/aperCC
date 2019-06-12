@@ -29,7 +29,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
 
     Example:
         scanid, source name, beam: [190108926, '3C147_36', 36]
-        steps: ['prepare', 'preflag', 'bpass_compare', 'gain_comare', 'bpass_compare_obs', 'gain_compare_obs']
+        steps: ['prepare', 'preflag', 'crosscal', bpass_compare', 'gain_comare', 'bpass_compare_obs', 'gain_compare_obs']
         function cal: apercc([[190108926, '3C147_36', 36], [190108927, '3C147_37', 37])
 
     Args:
@@ -53,7 +53,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     start_time = time()
 
     if not steps:
-        steps = ['prepare', 'preflag', 'bpass_compare',
+        steps = ['prepare', 'preflag', 'crosscal', 'bpass_compare',
                  'gain_comare', 'bpass_compare_obs', 'gain_compare_obs']
     # check that preflag is in it if prepare is run
     else:
@@ -171,7 +171,40 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     else:
         logger.info("Skipping running preflag for calibrators")
 
+    # Running crosscal for calibrators
+    # ===============================
+
+    start_time_flag = time()
+
+    logger.info("Flagging data of calibrators")
+
+    if 'crosscal' in steps:
+        for beam in beam_list:
+            crosscal = ccal(file_=None)
+            crosscal.basedir = basedir
+            crosscal.fluxcal = name_cal.upper().strip().split('_')[0] + '.MS'
+            # p.polcal = name_to_ms(name_polcal)
+            # p.target = name_to_ms(name_target)
+            # p2.paramfilename = 'param_{:02d}.npy'.format(beamnr)
+            crosscal.beam = "{:02d}".format(beam)
+            crosscal.crosscal_transfer_to_target = False
+            # p2.crosscal_transfer_to_target_targetbeams = "{:02d}".format(
+            #    beamnr)
+            try:
+                director(crosscal, 'rm', base_dir + '/param.npy',
+                         ignore_nonexistent=True)
+                # director(
+                #     p2, 'rm', basedir + '/param_{:02d}.npy'.format(beamnr), ignore_nonexistent=True)
+                crosscal.go()
+            except Exception as e:
+                # Exception was already logged just before
+                logger.warning(
+                    "Failed beam {}, skipping that from crosscal".format(beamnr))
+                logger.exception(e)
+
     # Running Bandbpass comparison
+    # ============================
+
     if 'bpass_compare' in steps:
 
         start_time_prepare = time()
@@ -186,6 +219,8 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
         logger.info("Skipping comparing bandpass")
 
     # Running Bandbpass comparison
+    # ============================
+
     if 'gain_compare' in steps:
 
         start_time_gain = time()
@@ -200,6 +235,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
         logger.info("Skipping comparing gain solutions")
 
     # Running Bandbpass comparison between observations
+    # =================================================
     if 'bpass_compare_obs' in steps:
 
         start_time_bandpass = time()
@@ -214,6 +250,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
         logger.info("Skipping comparing banpdass solutions across observations")
 
     # Running Bandbpass comparison between observations
+    # =================================================
     if 'bpass_compare_obs' in steps:
 
         start_time_gain = time()
