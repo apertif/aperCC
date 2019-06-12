@@ -112,7 +112,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
         logger.info("Getting data for calibrators")
 
         # go through the list of calibrators and run prepare
-        for (taskid_cal, name_cal, beamnr_cal) in cal_list:
+        for (task_id_cal, name_cal, beamnr_cal) in cal_list:
             logger.info("Running prepare for {0} of beam {1}".format(
                 name_cal, beamnr_cal))
             # create prepare object without config file
@@ -124,8 +124,8 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
             prep.polcal = ''
             prep.target = name_cal.upper().strip().split('_')[0] + '.MS'
             prep.prepare_target_beams = str(beamnr_cal)
-            prep.prepare_date = str(taskid_cal)[:6]
-            prep.prepare_obsnum_target = task_id
+            prep.prepare_date = str(task_id_cal)[:6]
+            prep.prepare_obsnum_target = task_id_cal
             try:
                 prep.go()
             except Exception as e:
