@@ -141,7 +141,7 @@ class ScanData(object):
 
             if len(data_dir) == 0:
                 logging.warning(
-                    "Could not find gaintable for beam {0:.02d}".format(beam_nr))
+                    "Could not find gaintable for beam {0:02d}".format(beam_nr))
                 return -1
 
             gaintable = "{0}/raw/{1}.{2}".format(
@@ -200,7 +200,7 @@ class ScanData(object):
 
             if len(data_dir) == 0:
                 logging.warning(
-                    "Could not find gaintable for beam {0:.02d}".format(beam_nr))
+                    "Could not find gaintable for beam {0:02d}".format(beam_nr))
                 return -1
 
             bpass = "{0}/raw/{1}.{2}".format(
