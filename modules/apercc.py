@@ -17,7 +17,7 @@ from apercal.modules.ccal import ccal
 from apercal.subs.managefiles import director
 
 
-def apercc(cal_list=None, base_dir=None, task_id=None, cal_name=None, search_all_nodes=False, steps=None):
+def apercc(cal_list=None, task_id=None, cal_name=None, base_dir=None, search_all_nodes=False, steps=None):
     """
     Main function to run the cross-calibration stability evaluation.
 
@@ -57,6 +57,7 @@ def apercc(cal_list=None, base_dir=None, task_id=None, cal_name=None, search_all
 
     # check input
     # if no list of a calibrators is given
+    cal_list_mode = True
     if cal_list is None:
         # then it needs the task id and the calibrator name to look for existing data
         if task_id is not None and cal_name is not None:
@@ -72,6 +73,8 @@ def apercc(cal_list=None, base_dir=None, task_id=None, cal_name=None, search_all
             else:
                 steps = ['bpass_compare', 'gain_comare',
                          'bpass_compare_obs', 'gain_compare_obs']
+            # using existing data
+            cal_list_mode = False
         # otherwise it won't do anything
         else:
             print(
@@ -123,10 +126,18 @@ def apercc(cal_list=None, base_dir=None, task_id=None, cal_name=None, search_all
 
     logger.info("Apertif cross-calibration stability evaluation")
 
-    logger.debug("apercc called with argument cal_list={}".format(cal_list))
-    logger.debug("steps = {}".format(steps))
-    logger.debug("base_dir = {}".format(base_dir))
+    if cal_list_mode:
+        logger.info("Using list of calibrators as input !!!!")
+    else:
+        logger.info("Using task id and calibrator name as input !!!!")
+
+    logger.debug("apercc called with arguments ...")
+    logger.debug("cal_list={}".format(cal_list))
     logger.debug("task_id = {}".format(task_id))
+    logger.debug("cal_name = {}".format(cal_name))
+    logger.debug("base_dir = {}".format(base_dir))
+    logger.debug("search_all_nodes = {}".format(search_all_nodes))
+    logger.debug("steps = {}".format(steps))
 
     # number of calibrators
     if cal_list is not None:
