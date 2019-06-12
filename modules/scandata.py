@@ -138,6 +138,12 @@ class ScanData(object):
             # get the directory corresponding to the beam:
             data_dir = self.dir_list[np.where(
                 self.beam_list == '{0:02d}'.format(beam_nr))]
+
+            if len(data_dir) == 0:
+                logging.warning(
+                    "Could not find gaintable for beam {0:.02d}".format(beam_nr))
+                return -1
+
             gaintable = "{0}/raw/{1}.{2}".format(
                 data_dir, self.source_name, self.gaintable_suffix)
 
@@ -191,6 +197,11 @@ class ScanData(object):
             # get the directory corresponding to the beam:
             data_dir = self.dir_list[np.where(
                 self.beam_list == '{0:02d}'.format(beam_nr))]
+
+            if len(data_dir) == 0:
+                logging.warning(
+                    "Could not find gaintable for beam {0:.02d}".format(beam_nr))
+                return -1
 
             bpass = "{0}/raw/{1}.{2}".format(
                 data_dir, self.source_name, self.bpass_suffix)
