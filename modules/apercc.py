@@ -91,7 +91,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     logger.debug("apercc called with argument cal_list={}".format(cal_list))
     logger.debug("steps = {}".format(steps))
     logger.debug("base_dir = {}".format(base_dir))
-    logger.debug("scan_id = {}".format(scan_id))
+    logger.debug("task_id = {}".format(task_id))
 
     # number of calibrators
     n_cals = len(cal_list)
