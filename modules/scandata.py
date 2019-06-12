@@ -35,7 +35,7 @@ class ScanData(object):
         Args:
             task id (int): task id of data, e.g. 190303083
             source_name (str): name of source, e.g. "3C48"
-            base_dir (str): name of data directory 
+            base_dir (str): name of data directory
         """
         self.task_id = task_id
         self.source_name = source_name
@@ -142,7 +142,7 @@ class ScanData(object):
         """
 
         # if no beam is specified, return a list of tables
-        if not beam_nr:
+        if beam_nr is not None:
             logging.info("Getting a list of bandpass tables")
 
             # empty table to be filled
