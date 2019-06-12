@@ -17,7 +17,7 @@ from apercal.modules.ccal import ccal
 from apercal.subs.managefiles import director
 
 
-def apercc(cal_list=None, base_dir=None, task_id=None, cal_name=None, steps=None):
+def apercc(cal_list=None, base_dir=None, task_id=None, cal_name=None, search_all_nodes=False, steps=None):
     """
     Main function to run the cross-calibration stability evaluation.
 
@@ -36,11 +36,13 @@ def apercc(cal_list=None, base_dir=None, task_id=None, cal_name=None, steps=None
     Args:
         cal_list (List(List(int, str, int)): scan id, source name, beam, optional
         base_dir (str): Name of directory to store the data,
-            if not specified it will be /data/apertif/<crosscal>/<scanid>
+            if not specified it will be /data/apertif/crosscal/<scanid> when new data is fetched
+            or /data/apertif/<scanid> when existing data is used
         task_id (int): ID of scan to be used as main ID and for the directory,
             if not specified it will be the first scan id
         cal_name (str): Name of the calibrator,
             if not specified the first name in the calibrator list will be used
+        search_all_nodes (bool): 
         steps (List(str)): List of steps in this task
 
     To Do: Use existing data using the task_id option and the name of the calibrator?
@@ -93,8 +95,14 @@ def apercc(cal_list=None, base_dir=None, task_id=None, cal_name=None, steps=None
         task_id = task_id
 
     # create data directory unless specified using the first id unless otherwise specified
+    # if no directory is specified
     if not base_dir:
-        base_dir = '/data/apertif/crosscal/{}/'.format(task_id)
+        # and existing data is used, assume the base dir is an apercal processed data directory
+        if task_id is not None and cal_name is not None:
+            base_dir = '/data/apertif/{}/'.format(task_id)
+        # if new data is fetched from the archive use a different default directory
+        else:
+            base_dir = '/data/apertif/crosscal/{}/'.format(task_id)
     elif len(base_dir) > 0 and base_dir[-1] != '/':
         base_dir = base_dir + '/'
     if not os.path.exists(base_dir):
