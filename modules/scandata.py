@@ -151,7 +151,7 @@ class ScanData(object):
             # go through directory list and check if table exists
             for single_dir in self.dir_list:
                 bpass = "{0}/raw/{1}.{2}".format(
-                    single_dir, self.sourcename, self.bpass_suffix)
+                    single_dir, self.source_name, self.bpass_suffix)
                 if os.path.isdir(bpass):
                     logging.info("Found bandpass table {}".format(bpass))
                     bpass_list.append(bpass)
@@ -167,7 +167,7 @@ class ScanData(object):
 
         else:
             bpass = "{0}/{1:02d}/raw/{2}.{3}".format(
-                self.task_id_path. beam_nr, self.sourcename, self.bpass_suffix)
+                self.task_id_path, beam_nr, self.source_name, self.bpass_suffix)
 
             if os.path.isdir(bpass):
                 logging.info("Found bandpass table {}".format(bpass))
