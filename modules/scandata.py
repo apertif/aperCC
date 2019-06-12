@@ -49,6 +49,8 @@ class ScanData(object):
 
         if base_dir is None:
             self.base_dir = '/data/apertif/'
+        else:
+            self.base_dir = base_dir
 
         #self.imagepathsuffix = ""
         # Fix to not include .MS no matter what
