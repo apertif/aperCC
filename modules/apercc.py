@@ -13,6 +13,7 @@ from time import time
 import logging
 from apercal.modules.prepare import prepare
 from apercal.modules.preflag import preflag
+from apercal.modules.ccal import ccal
 from apercal.subs.managefiles import director
 
 
@@ -55,10 +56,10 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     if not steps:
         steps = ['prepare', 'preflag', 'crosscal', 'bpass_compare',
                  'gain_comare', 'bpass_compare_obs', 'gain_compare_obs']
-    # check that preflag is in it if prepare is run
-    else:
-        if 'prepare' in steps and not 'preflag' in steps:
-            steps.insert(1, 'preflag')
+    # # check that preflag is in it if prepare is run
+    # else:
+    #     if 'prepare' in steps and not 'preflag' in steps:
+    #         steps.insert(1, 'preflag')
 
     # get the scan id to be used as the task id
     if not scan_id:
@@ -145,11 +146,11 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     # Running preflag for calibrators
     # ===============================
 
-    start_time_flag = time()
-
-    logger.info("Flagging data of calibrators")
-
     if 'preflag' in steps:
+        start_time_flag = time()
+
+        logger.info("Flagging data of calibrators")
+
         # Flag fluxcal (pretending it's a target)
         # needs to be changed for parallel preflag and make it a loop
         flag = preflag(filename=None)
@@ -174,14 +175,15 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     # Running crosscal for calibrators
     # ===============================
 
-    start_time_flag = time()
-
-    logger.info("Flagging data of calibrators")
-
     if 'crosscal' in steps:
-        for beam in beam_list:
+        start_time_crosscal = time()
+
+        logger.info("Running crosscal for calibrators")
+
+        for beam_nr in beam_list:
+            logger.info("Running crosscal for beam {0}".format(beam_nr))
             crosscal = ccal(file_=None)
-            crosscal.basedir = basedir
+            crosscal.basedir = base_dir
             crosscal.fluxcal = name_cal.upper().strip().split('_')[0] + '.MS'
             # p.polcal = name_to_ms(name_polcal)
             # p.target = name_to_ms(name_target)
@@ -199,8 +201,16 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
             except Exception as e:
                 # Exception was already logged just before
                 logger.warning(
-                    "Failed beam {}, skipping that from crosscal".format(beamnr))
+                    "Failed crosscal for beam {}".format(beam_nr))
                 logger.exception(e)
+            else:
+                logger.info(
+                    "Running crosscal for beam {0} ... Done".format(beam_nr))
+
+        logger.info("Running crosscal for calibrators ... Done ({0}s)".format(
+            time() - start_time_crosscal))
+    else:
+        logger.info("Skipping running crosscal for calibrators")
 
     # Running Bandbpass comparison
     # ============================
