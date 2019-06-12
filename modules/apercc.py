@@ -17,12 +17,12 @@ from apercal.modules.ccal import ccal
 from apercal.subs.managefiles import director
 
 
-def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
+def apercc(cal_list=None, base_dir=None, task_id=None, cal_name=None, steps=None):
     """
     Main function to run the cross-calibration stability evaluation.
 
-    For a list of calibrator scans, this functions runs the cross-calibration
-    evaluation.
+    For a list of calibrator scans or a given task id and calibrator name, 
+    this functions runs the cross-calibration evaluation.
     The function can get the data from ALTA and flags them using the Apercal modules
     prepare and preflag. It compares the bandpass solutions and gain factors between beams
     and between observations of the same calibrators
@@ -31,19 +31,19 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     Example:
         scanid, source name, beam: [190108926, '3C147_36', 36]
         steps: ['prepare', 'preflag', 'crosscal', bpass_compare', 'gain_comare', 'bpass_compare_obs', 'gain_compare_obs']
-        function cal: apercc([[190108926, '3C147_36', 36], [190108927, '3C147_37', 37])
+        function cal: apercc(cal_list=[[190108926, '3C147_36', 36], [190108927, '3C147_37', 37]) or apercc(task_id = 190409056, cal_name='3C196')
 
     Args:
-        cal_list (List(List(int, str, int)): scan id, source name, beam
+        cal_list (List(List(int, str, int)): scan id, source name, beam, optional
         base_dir (str): Name of directory to store the data,
             if not specified it will be /data/apertif/<crosscal>/<scanid>
-        scan_id (int): ID of scan to be used as main ID and for the directory,
+        task_id (int): ID of scan to be used as main ID and for the directory,
             if not specified it will be the first scan id
         cal_name (str): Name of the calibrator,
             if not specified the first name in the calibrator list will be used
         steps (List(str)): List of steps in this task
 
-    To Do: Use existing data using the scan_id option and the name of the calibrator?
+    To Do: Use existing data using the task_id option and the name of the calibrator?
 
     """
 
@@ -53,19 +53,44 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     # start time of this function
     start_time = time()
 
-    if not steps:
-        steps = ['prepare', 'preflag', 'crosscal', 'bpass_compare',
-                 'gain_comare', 'bpass_compare_obs', 'gain_compare_obs']
+    # check input
+    # if no list of a calibrators is given
+    if cal_list is None:
+        # then it needs the task id and the calibrator name to look for existing data
+        if task_id is not None and cal_name is not None:
+            print("Using task id and calibrator name. Assuming to use existing data. Will not run preflag, prepare and crosscal")
+            # check that if steps were provided, they don't contain preflag, prepare and crosscal
+            if steps is not None:
+                if 'prepare' in steps:
+                    steps.remove('prepare')
+                if 'preflag' in steps:
+                    steps.remove('preflag')
+                if 'crosscal' in steps:
+                    steps.remove('crosscal')
+            else:
+                steps = ['bpass_compare', 'gain_comare',
+                         'bpass_compare_obs', 'gain_compare_obs']
+        # otherwise it won't do anything
+        else:
+            print(
+                "Input parameters incorrect. Please specify either cal_list or task_id and cal_name. Abort")
+            return -1
+    else:
+        print("Using list of calibrators")
+        if not steps:
+            steps = ['prepare', 'preflag', 'crosscal', 'bpass_compare',
+                     'gain_comare', 'bpass_compare_obs', 'gain_compare_obs']
+
     # # check that preflag is in it if prepare is run
     # else:
     #     if 'prepare' in steps and not 'preflag' in steps:
     #         steps.insert(1, 'preflag')
 
     # get the scan id to be used as the task id
-    if not scan_id:
+    if not task_id:
         task_id = cal_list[0][0]
     else:
-        task_id = scan_id
+        task_id = task_id
 
     # create data directory unless specified using the first id unless otherwise specified
     if not base_dir:
@@ -99,7 +124,10 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     n_cals = len(cal_list)
 
     # get the name of the flux calibrator
-    name_cal = str(cal_list[0][1]).strip().split('_')[0]
+    if cal_name is None:
+        name_cal = str(cal_list[0][1]).strip().split('_')[0]
+    else:
+        name_cal = cal_name
 
     # get a list of beams
     beam_list = np.array([cal_list[k][2] for k in range(n_cals)])
@@ -138,7 +166,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
                 logger.info("Prepare successful for {0} of beam {1}".format(
                     name_cal, beamnr_cal))
 
-        logger.info("Getting data for calibrators ... Done ({0}s)".format(
+        logger.info("Getting data for calibrators ... Done ({0:.0f}s)".format(
             time() - start_time_prepare))
     else:
         logger.info("Skipping getting data for calibrators")
@@ -167,7 +195,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
             logger.warning("Preflag failed")
             logger.exception(e)
         else:
-            logger.info("Flagging data of calibrators ... Done ({0}s)".format(
+            logger.info("Flagging data of calibrators ... Done ({0:.0f}s)".format(
                 time() - start_time_flag))
     else:
         logger.info("Skipping running preflag for calibrators")
@@ -207,7 +235,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
                 logger.info(
                     "Running crosscal for beam {0} ... Done".format(beam_nr))
 
-        logger.info("Running crosscal for calibrators ... Done ({0}s)".format(
+        logger.info("Running crosscal for calibrators ... Done ({0:.0f}s)".format(
             time() - start_time_crosscal))
     else:
         logger.info("Skipping running crosscal for calibrators")
@@ -223,7 +251,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
 
         logger.info("#### Doing nothing here yet ####")
 
-        logger.info("Comparing bandpass ... Done ({})".format(
+        logger.info("Comparing bandpass ... Done ({0:.0f})".format(
             time() - start_time_prepare))
     else:
         logger.info("Skipping comparing bandpass")
@@ -239,7 +267,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
 
         logger.info("#### Doing nothing here yet ####")
 
-        logger.info("Comparing gain solutions ... Done ({})".format(
+        logger.info("Comparing gain solutions ... Done ({0:.0f})".format(
             time() - start_time_gain))
     else:
         logger.info("Skipping comparing gain solutions")
@@ -254,7 +282,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
 
         logger.info("#### Doing nothing here yet ####")
 
-        logger.info("Comparing banpdass solutions across observations ... Done ({})".format(
+        logger.info("Comparing banpdass solutions across observations ... Done ({0:.0f})".format(
             time() - start_time_bandpass))
     else:
         logger.info("Skipping comparing banpdass solutions across observations")
@@ -269,10 +297,10 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
 
         logger.info("#### Doing nothing here yet ####")
 
-        logger.info("Comparing banpdass solutions across observations ... Done ({})".format(
+        logger.info("Comparing banpdass solutions across observations ... Done ({0:.0f})".format(
             time() - start_time_gain))
     else:
         logger.info("Skipping comparing banpdass solutions across observations")
 
     logger.info(
-        "Apertif cross-calibration stability evaluation ... Done ({}s)".format(time() - start_time))
+        "Apertif cross-calibration stability evaluation ... Done ({0:.0f}s)".format(time() - start_time))
