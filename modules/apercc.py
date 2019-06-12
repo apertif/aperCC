@@ -74,8 +74,8 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
         try:
             os.mkdir(base_dir)
         except Exception as e:
-            return -1
             print("Creating the base directory failed. Abort")
+            return -1
 
     logfilepath = os.path.join(base_dir, 'apercc.log')
 
@@ -100,7 +100,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
     name_cal = str(cal_list[0][1]).strip().split('_')[0]
 
     # get a list of beams
-    beam_list = np.array([cal[k][2] for k in range(n_cals)])
+    beam_list = np.array([cal_list[k][2] for k in range(n_cals)])
 
     # Getting the data using prepare
     # ==============================
