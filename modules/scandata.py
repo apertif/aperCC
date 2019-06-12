@@ -62,7 +62,7 @@ class ScanData(object):
 
         if self.hostname == 'happili-01' and base_dir is None:
             self.dir_list = glob.glob(
-                "{0}/[0-3][0-9]".format(self.task_id_path.replace("/data/", "/data[0-4]/")))
+                "{0}/[0-3][0-9]".format(self.task_id_path.replace("/data/", "/data*/")))
         else:
             self.dir_list = glob.glob(
                 "{0}/[0-3][0-9]".format(self.task_id_path))
