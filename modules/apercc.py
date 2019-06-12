@@ -108,7 +108,7 @@ def apercc(cal_list=None, task_id=None, cal_name=None, base_dir=None, search_all
             base_dir = '/data/apertif/crosscal/{}/'.format(task_id)
     elif len(base_dir) > 0 and base_dir[-1] != '/':
         base_dir = base_dir + '/'
-    if not os.path.exists(base_dir):
+    if not os.path.exists(base_dir) and cal_list_mode:
         try:
             os.mkdir(base_dir)
         except Exception as e:
