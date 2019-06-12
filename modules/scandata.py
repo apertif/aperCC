@@ -65,7 +65,7 @@ class ScanData(object):
                 "{0}/[0-3][0-9]".format(self.task_id_path.replace("/data/", "/data[0-4]/")))
         else:
             self.dir_list = glob.glob(
-                "{0}/[0-3][0-9]".format(self.task_id_path.replace("/data/", "/data[0-4]/")))
+                "{0}/[0-3][0-9]".format(self.task_id_path))
 
         if len(self.dir_list) == 0:
             logging.warning("No beam directories found")
