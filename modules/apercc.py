@@ -114,6 +114,9 @@ def apercc(cal_list=None, task_id=None, cal_name=None, base_dir=None, search_all
         except Exception as e:
             print("Creating the base directory failed. Abort")
             return -1
+    elif not os.path.exists(base_dir):
+        print("Directory was not found. Abort")
+        return -1
 
     logfilepath = os.path.join(base_dir, 'apercc.log')
 
