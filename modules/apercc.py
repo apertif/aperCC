@@ -129,7 +129,10 @@ def apercc(cal_list=None, base_dir=None, task_id=None, cal_name=None, search_all
     logger.debug("task_id = {}".format(task_id))
 
     # number of calibrators
-    n_cals = len(cal_list)
+    if cal_list is not None:
+        n_cals = len(cal_list)
+    else:
+        n_cals = 1
 
     # get the name of the flux calibrator
     if cal_name is None:
