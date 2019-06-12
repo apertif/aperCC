@@ -35,7 +35,7 @@ class ScanData(object):
         Args:
             task id (int): task id of data, e.g. 190303083
             source_name (str): name of source, e.g. "3C48"
-            base_dir (str): name of data directory 
+            base_dir (str): name of data directory
         """
 
         # first check what happili node on
