@@ -131,6 +131,8 @@ def apercc(cal_list=None, base_dir=None, task_id=None, cal_name=None, search_all
     # number of calibrators
     if cal_list is not None:
         n_cals = len(cal_list)
+        # get a list of beams
+        beam_list = np.array([cal_list[k][2] for k in range(n_cals)])
     else:
         n_cals = 1
 
@@ -139,9 +141,6 @@ def apercc(cal_list=None, base_dir=None, task_id=None, cal_name=None, search_all
         name_cal = str(cal_list[0][1]).strip().split('_')[0]
     else:
         name_cal = cal_name
-
-    # get a list of beams
-    beam_list = np.array([cal_list[k][2] for k in range(n_cals)])
 
     # Getting the data using prepare
     # ==============================
