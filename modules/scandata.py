@@ -28,26 +28,27 @@ This specifies the location of all data, assuming setup of automatic pipeline
 
 
 class ScanData(object):
-    def __init__(self, scan, sourcename, base_dir):
+    def __init__(self, task_id, source_name, base_dir):
         """
-        Initialize with scan (taskid) and source name
+        Initialize with task id and source name
         and place holders for phase and amplitude
         Args:
-            scan (int): scan number, e.g. 190303083
-            sourcename (str): name of source, e.g. "3C48"
+            task id (int): task id of data, e.g. 190303083
+            source_name (str): name of source, e.g. "3C48"
             base_dir (str): name of data directory 
         """
-        self.scan = scan
-        self.sourcename = sourcename
-        self.basedir = base_dir
+        self.task_id = task_id
+        self.source_name = source_name
+        self.base_dir = base_dir
         #self.imagepathsuffix = ""
         # Fix to not include .MS no matter what
-        if self.sourcename[-2:] == 'MS':
-            self.sourcename = self.sourcename[:-3]
+        if self.source_name[-2:] == 'MS':
+            self.source_name = self.source_name[:-3]
 
         # also get a directory list and beamlist
+        self.task_id_path = os.path.join(self.base_dir, self.task_id)
         self.dir_list = glob.glob(
-            "{0}{1}/[0-3][0-9]".format(self.basedir, self.scan))
+            "{0}/[0-3][0-9]".format(self.task_id_path))
 
         if len(self.dir_list) == 0:
             logging.warning("No beam directories found")
@@ -103,7 +104,7 @@ class ScanData(object):
             # go through directory list and check if table exists
             for single_dir in self.dir_list:
                 gaintable = "{0}/raw/{1}.{2}".format(
-                    single_dir, self.sourcename, self.gaintable_suffix)
+                    single_dir, self.source_name, self.gaintable_suffix)
                 if os.path.isdir(gaintable):
                     logging.info("Found gaintable {}".format(gaintable))
                     gaintable_list.append(gaintable)
@@ -118,8 +119,8 @@ class ScanData(object):
                 return gaintable_list
 
         else:
-            gaintable = "{0}{1:2d}/raw/{2}.{3}".format(
-                self.basedir, beam_nr, self.sourcename, self.gaintable_suffix)
+            gaintable = "{0}/{1:02d}/raw/{2}.{3}".format(
+                self.task_id_path, beam_nr, self.source_name, self.gaintable_suffix)
 
             if os.path.isdir(gaintable):
                 logging.info("Found gaintable {}".format(gaintable))
@@ -165,8 +166,8 @@ class ScanData(object):
                 return bpass_list
 
         else:
-            bpass = "{0}{1:2d}/raw/{2}.{3}".format(
-                self.basedir, beam_nr, self.sourcename, self.bpass_suffix)
+            bpass = "{0}/{1:02d}/raw/{2}.{3}".format(
+                self.task_id_path. beam_nr, self.sourcename, self.bpass_suffix)
 
             if os.path.isdir(bpass):
                 logging.info("Found bandpass table {}".format(bpass))
