@@ -46,7 +46,7 @@ class ScanData(object):
             self.source_name = self.source_name[:-3]
 
         # also get a directory list and beamlist
-        self.task_id_path = os.path.join(self.base_dir, self.task_id)
+        self.task_id_path = os.path.join(self.base_dir, str(self.task_id))
         self.dir_list = glob.glob(
             "{0}/[0-3][0-9]".format(self.task_id_path))
 
