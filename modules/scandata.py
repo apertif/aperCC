@@ -28,7 +28,7 @@ This specifies the location of all data, assuming setup of automatic pipeline
 
 
 class ScanData(object):
-    def __init__(self, task_id, source_name, base_dir=None):
+    def __init__(self, task_id, source_name, base_dir=None, use_all_nodes=False):
         """
         Initialize with task id and source name
         and place holders for phase and amplitude
@@ -36,10 +36,14 @@ class ScanData(object):
             task id (int): task id of data, e.g. 190303083
             source_name (str): name of source, e.g. "3C48"
             base_dir (str): name of data directory
+            use_all_nodes (bool): Use data directories from all nodes, only affective on happili-01
         """
 
         # first check what happili node on
         self.hostname = os.uname()[1]
+
+        # use data from all nodes
+        self.use_all_nodes = use_all_nodes
 
         # main task id
         self.task_id = task_id
@@ -60,7 +64,7 @@ class ScanData(object):
         # also get a directory list and beamlist
         self.task_id_path = os.path.join(self.base_dir, str(self.task_id))
 
-        if self.hostname == 'happili-01' and base_dir is None:
+        if self.hostname == 'happili-01' and use_all_nodes:
             self.dir_list = glob.glob(
                 "{0}/[0-3][0-9]".format(self.task_id_path.replace("/data/", "/data*/")))
         else:
