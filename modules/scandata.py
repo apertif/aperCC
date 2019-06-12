@@ -62,13 +62,16 @@ class ScanData(object):
 
         if self.hostname == 'happili-01' and base_dir is None:
             self.dir_list = glob.glob(
-                "{0}/[0-3][0-9]".format(self.task_id_path.replace("/data/", "/data[0-4]/")))
+                "{0}/[0-3][0-9]".format(self.task_id_path.replace("/data/", "/data*/")))
         else:
             self.dir_list = glob.glob(
-                "{0}/[0-3][0-9]".format(self.task_id_path.replace("/data/", "/data[0-4]/")))
+                "{0}/[0-3][0-9]".format(self.task_id_path))
 
         if len(self.dir_list) == 0:
             logging.warning("No beam directories found")
+        else:
+            self.dir_list = np.array(self.dir_list)
+            self.dir_list.sort()
 
         self.beam_list = np.array([os.path.basename(dir)
                                    for dir in self.dir_list])
@@ -136,6 +139,12 @@ class ScanData(object):
             # get the directory corresponding to the beam:
             data_dir = self.dir_list[np.where(
                 self.beam_list == '{0:02d}'.format(beam_nr))]
+
+            if len(data_dir) == 0:
+                logging.warning(
+                    "Could not find gaintable for beam {0:02d}".format(beam_nr))
+                return -1
+
             gaintable = "{0}/raw/{1}.{2}".format(
                 data_dir, self.source_name, self.gaintable_suffix)
 
@@ -189,6 +198,11 @@ class ScanData(object):
             # get the directory corresponding to the beam:
             data_dir = self.dir_list[np.where(
                 self.beam_list == '{0:02d}'.format(beam_nr))]
+
+            if len(data_dir) == 0:
+                logging.warning(
+                    "Could not find gaintable for beam {0:02d}".format(beam_nr))
+                return -1
 
             bpass = "{0}/raw/{1}.{2}".format(
                 data_dir, self.source_name, self.bpass_suffix)
