@@ -188,7 +188,7 @@ def apercc(cal_list, base_dir=None, scan_id=None, cal_name=None, steps=None):
             # p.polcal = name_to_ms(name_polcal)
             # p.target = name_to_ms(name_target)
             # p2.paramfilename = 'param_{:02d}.npy'.format(beamnr)
-            crosscal.beam = "{:02d}".format(beam)
+            crosscal.beam = "{:02d}".format(beam_nr)
             crosscal.crosscal_transfer_to_target = False
             # p2.crosscal_transfer_to_target_targetbeams = "{:02d}".format(
             #    beamnr)
