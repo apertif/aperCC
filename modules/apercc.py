@@ -211,6 +211,7 @@ def apercc(cal_list=None, task_id=None, cal_name=None, base_dir=None, search_all
         flag.polcal = ''
         flag.target = name_cal.upper().strip().split('_')[0] + '.MS'
         flag.beam = "{:02d}".format(beam_list[0])
+        flag.preflag_targetbeams = "{:02d}".format(beamnr)
         try:
             director(flag, 'rm', base_dir + '/param.npy',
                      ignore_nonexistent=True)
