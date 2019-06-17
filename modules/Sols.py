@@ -8,6 +8,7 @@ Created on Tue Jun 11 13:07:00 2019
 
 import os
 import numpy as np
+from scipy.interpolate import interp1d
 import casacore.tables as pt
 
 import matplotlib.pyplot as plt
@@ -16,6 +17,21 @@ import logging
 logger = logging.getLogger(__name__)
 
 #TODO: plotting selected or all ants
+
+import pyrap.measures as pm
+import pyrap.quanta as qa
+import ephem
+
+
+
+def get_time(t):
+    time_start = qa.quantity(t, 's')
+    me = pm.measures()
+    dict_time_start_MDJ = me.epoch('utc', time_start)
+    time_start_MDJ=dict_time_start_MDJ['m0']['value']
+    JD=time_start_MDJ+2400000.5-2415020
+    d=ephem.Date(JD)
+    return d.datetime()#.isoformat().replace("T","/")
 
 class BPSols():
 
@@ -51,6 +67,7 @@ class BPSols():
             self.amp = amp_sols
             self.flags = flags
             self.freq = freqs
+            self.t0 = get_time(times[0])
 
         else:
             logger.info('BP table not present. Filling with NaNs.')
@@ -108,39 +125,57 @@ class BPSols():
                            format(self.amp.shape, other.amp.shape))
 
         amp_norm = self.amp / other.amp
-        phase_norm = self.phase / other.phase
+        phase_norm = self.phase - other.phase
 
         return amp_norm, phase_norm
 
 
-    def plot_norm_amp(self, other, ants='all', imagepath=None, ax=None):
-        """Plot amplitude, one plot per antenna"""
+    def plot_norm_amp(self, other, ant='RT3', imagepath=None, ax=None):
+        """Plot norm amplitude, one plot per antenna"""
 
         logging.info("Creating plots for normalized bandpass amplitude")
-
         amp_norm, phase_norm = self.normalize(other)
+        a = self.ants.index(ant)
+        if ax is None:
+            fig, ax = plt.subplots(1)
+        else:
+            fig = ax.get_figure()
 
-        # imagepath = self.create_imagepath(imagepath)
-        ant_names = self.ants
-        #figlist = ['fig_'+str(i) for i in range(len(ant_names))]
-        for a,ant in enumerate(ant_names[:2]):
-            if ax is None:
-                fig, ax = plt.subplots(1)
-            else:
-                fig = ax.get_figure()
-            ax.set_title('BP amplitude (normalized) for {0}'.format(ant))
+        ax.scatter(self.freq[0,:]/1e9,amp_norm[a,:,0],
+                        label='XX',
+                        marker=',',s=1)
+        ax.scatter(self.freq[0,:]/1e9,amp_norm[a,:,1],
+                        label='YY',
+                        marker=',',s=1)
 
-            ax.scatter(self.freq[0,:],amp_norm[a,:,0],
-                            label='XX',
-                            marker=',',s=1)
-            ax.scatter(self.freq[0,:],amp_norm[a,:,1],
-                            label='YY',
-                            marker=',',s=1)
-
-            ax.set_ylim(0,1.80)
-            ax.legend(markerscale=3,fontsize=14)
+        ax.set_ylim(0.52,1.52)
+        ax.set_xlim(1.22,1.53)
+            # ax.legend(markerscale=3,fontsize=14)
         # if imagepath is not None:
             # fig.savefig('{}'.format(imagepath))
+
+
+    def plot_norm_phase(self, other, ant='RT3', imagepath=None, ax=None):
+        """Plot norm phase, one plot per antenna"""
+
+        logging.info("Creating plots for bandpass phase")
+        amp_norm, phase_norm = self.normalize(other)
+
+        a = self.ants.index(ant)
+        if ax is None:
+            fig, ax = plt.subplots(1)
+        else:
+            fig = ax.get_figure()
+
+        ax.scatter(self.freq[0,:]/1e9, phase_norm[a,:,0],
+                        label='XX',
+                        marker=',',s=1)
+        ax.scatter(self.freq[0,:]/1e9, phase_norm[a,:,1],
+                        label='YY',
+                        marker=',',s=1)
+
+        ax.set_ylim(-203,203)
+        ax.set_xlim(1.22,1.53)
 
 
 class GainSols():
@@ -192,6 +227,7 @@ class GainSols():
             self.ants = ant_names
             self.time = times
             self.flags = flags_ant_array
+            self.t0 = get_time(times[0])
 
         else:
             logger.info('Gain table not present. Filling with NaNs.')
@@ -205,10 +241,43 @@ class GainSols():
     def normalize(self, other):
         """ divide by the other solutions """
 
-        amp_norm = self.amp / other.amp
-        phase_norm = np.divide(self.phase, other.phase, out=np.zeros_like(self.phase), where=other.phase!=0)
+        t1 = self.time - self.time[0]
+        t2 = other.time - other.time[0]
 
-        return amp_norm, phase_norm
+        if len(t1) < len(t2):
+            a1 = self.amp
+            p1 = self.phase
+            a2 = np.zeros_like(a1)
+            p2 = np.zeros_like(p1)
+            for a in range(len(self.ants)):
+                for i in [0,1]: # XX and YY
+                    a2[a,:,i] = np.interp(list(t1), list(t2), list(other.amp[a,:,i]))
+                    p2[a,:,i] = np.interp(list(t1), list(t2), list(other.phase[a,:,i]))
+            t = t1
+
+        elif len(t1) > len(t2):
+            a2 = other.amp
+            p2 = other.phase
+            a1 = np.zeros_like(a2)
+            p1 = np.zeros_like(p2)
+            for a in range(len(self.ants)):
+                for i in [0,1]: # XX and YY
+                    a1[a,:,i] = np.interp(list(t2), list(t1), list(self.amp[a,:,i]))
+                    p1[a,:,i] = np.interp(list(t2), list(t1), list(self.phase[a,:,i]))
+            t = t2
+        else:
+            a1 = self.amp
+            p1 = self.phase
+            a2 = other.amp
+            p2 = other.phase
+            t = t1
+
+
+
+        amp_norm = a1 / a2
+        phase_norm = p1 - p2
+
+        return t/60, amp_norm, phase_norm
 
 
     def plot_amp(self, imagepath=None):
@@ -246,24 +315,60 @@ class GainSols():
             plt.legend(markerscale=3,fontsize=14)
 
 
-    def plot_norm_amp(self, other):
-        """Plot amplitude, one plot per antenna"""
+    def plot_norm_amp(self, other, ant='RT3', imagepath=None, ax=None):
+        """Plot norm amplitude, one plot per antenna"""
 
-        amp_norm, phase_norm = self.normalize(other)
         logging.info("Creating plots for gain amplitude")
-        ant_names = self.ants
+        t, amp_norm, phase_norm = self.normalize(other)
 
-        for a,ant in enumerate(ant_names[1:2]):
-            plt.figure(figsize=(4,3))
-            plt.suptitle('Gain amplitude for Antenna {0}'.format(ant))
-            plt.scatter(self.time, amp_norm[a,:,0],
-                       label='XX',
-                       marker=',',s=5)
-            plt.scatter(self.time, amp_norm[a,:,1],
-                       label='YY',
-                       marker=',',s=5)
-            plt.ylim(0,1.8)
-            plt.legend(markerscale=3, fontsize=7, loc=1)
+        a = self.ants.index(ant)
+        if ax is None:
+            fig, ax = plt.subplots(1)
+        else:
+            fig = ax.get_figure()
+
+        ax.scatter(t, amp_norm[a,:,0],
+                   label='XX',
+                   marker=',',s=5)
+        ax.scatter(t, amp_norm[a,:,1],
+                   label='YY',
+                   marker=',',s=5)
+        ax.set_ylim(0.18, 2.48)
 
 
+    def plot_norm_phase(self, other, ant='RT3', imagepath=None, ax=None):
+        """Plot norm phase, one plot per antenna"""
 
+        logging.info("Creating plots for bandpass phase")
+        t, amp_norm, phase_norm = self.normalize(other)
+
+        a = self.ants.index(ant)
+        if ax is None:
+            fig, ax = plt.subplots(1)
+        else:
+            fig = ax.get_figure()
+
+        ax.scatter(t, phase_norm[a,:,0],
+                        label='XX',
+                        marker=',',s=1)
+        ax.scatter(t, phase_norm[a,:,1],
+                        label='YY',
+                        marker=',',s=1)
+
+        ax.set_ylim(-203, 203)
+        # ax.set_xlim(1.22,1.53)
+
+# test
+
+# a = BPSols('/home/kutkin/apertif/pro/test_data/B00_3C196.Bscan')
+# b = BPSols('/home/kutkin/apertif/pro/test_data/B03_3C196.Bscan')
+# a.plot_norm_phase(b)
+
+# a = GainSols('/home/kutkin/apertif/pro/test_data/B01_3C138.G1ap')
+
+
+# a = GainSols('/home/kutkin/apertif/pro/test_data/3C196.G1ap')
+# b = GainSols('/home/kutkin/apertif/pro/test_data/B03_3C138.G1ap')
+# print a.amp.shape, b.amp.shape
+#
+# a.plot_norm_amp(b)
