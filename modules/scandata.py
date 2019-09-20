@@ -67,6 +67,9 @@ class ScanData(object):
         if self.hostname == 'happili-01' and self.search_all_nodes:
             self.dir_list = glob.glob(
                 "{0}/[0-3][0-9]".format(self.task_id_path.replace("/data/", "/data*/")))
+            for _ in self.dir_list:
+                if _.startswith('/data5'):
+                    self.dir_list.remove(_)
         else:
             self.dir_list = glob.glob(
                 "{0}/[0-3][0-9]".format(self.task_id_path))
@@ -77,8 +80,8 @@ class ScanData(object):
             self.dir_list = np.array(self.dir_list)
             self.dir_list.sort()
 
-        self.beam_list = np.array([os.path.basename(dir)
-                                   for dir in self.dir_list])
+        self.beam_list = np.array([os.path.basename(_)
+                                   for _ in self.dir_list])
 
         if len(self.beam_list) == 0:
             logging.warning("No beams found")
