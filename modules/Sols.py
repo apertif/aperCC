@@ -33,6 +33,7 @@ def get_time(t):
     d=ephem.Date(JD)
     return d.datetime()#.isoformat().replace("T","/")
 
+
 class BPSols():
 
     def __init__(self, bptable):
@@ -77,13 +78,24 @@ class BPSols():
             self.amp = np.full((12,2,2),np.nan)
             self.freq = np.full((2,2),np.nan)
 
+    def get_ant_bpass(self, ant='RT3'):
+        """ return freq, [XX, YY] amp, [XX, YY] phase for a given ANT name """
+        a = self.ants.index(ant)
+        return self.freq[0,:], self.amp[a,:,:], self.phase[a,:,:]
 
-    def plot_amp(self, imagepath=None):
+    def get_bpass(self):
+        """ return dictionary {ant_name: [freq, amp_XX_YY, phase_XX_YY]} """
+        res = dict()
+        for antname in self.ants:
+            fap = self.get_ant_bpass(ant=antname)
+            res.update({antname:fap})
+        return res
+
+    def plot_amp(self, ants=['RT3'], imagepath=None):
         """Plot amplitude, one plot per antenna"""
 
         logging.info("Creating plots for bandpass amplitude")
-        ant_names = self.ants
-        for a, ant in enumerate(ant_names[1:2]):
+        for a, ant in enumerate(ants):
             fig, ax = plt.subplots(1,figsize=(4,3))
             plt.suptitle('Bandpass amplitude for Antenna {0}'.format(ant))
             ax.plot(self.freq[0,:],self.amp[a,:,0],
@@ -93,24 +105,20 @@ class BPSols():
             ax.set_ylim(0,1.8)
             ax.legend(markerscale=3,fontsize=14)
 
-    def plot_phase(self, imagepath=None):
+    def plot_phase(self, ants=['RT3'], imagepath=None):
         """Plot phase, one plot per antenna"""
 
         logging.info("Creating plots for bandpass phase")
-        ant_names = self.ants
-        for a,ant in enumerate(ant_names[:2]):
+        for a, ant in enumerate(ants):
             plt.figure(figsize=(4,3))
             plt.suptitle('Bandpass phases for Antenna {0}'.format(ant))
 
-            plt.plot(self.freq[0,:],self.phase[a,:,0],
+            plt.plot(self.freq[0,:], self.phase[a,:,0],
                             label='XX', ms=0.5, lw=0.3)
-            # plt.plot(self.freq[0,:],self.phase[a,:,1],
-                            # label='YY', ms=0.5, lw=0.3)
-
-
+            plt.plot(self.freq[0,:], self.phase[a,:,1],
+                            label='YY', ms=0.5, lw=0.3)
             plt.ylim(-180,180)
             plt.legend(markerscale=3,fontsize=14)
-
 
     def normalize(self, other):
         """
@@ -125,7 +133,6 @@ class BPSols():
         phase_norm = self.phase - other.phase
 
         return amp_norm, phase_norm
-
 
     def plot_norm_amp(self, other, ant='RT3', imagepath=None, ax=None):
         """Plot norm amplitude, one plot per antenna"""
@@ -150,7 +157,7 @@ class BPSols():
             # ax.legend(markerscale=3,fontsize=14)
         # if imagepath is not None:
             # fig.savefig('{}'.format(imagepath))
-
+        return fig, ax
 
     def plot_norm_phase(self, other, ant='RT3', imagepath=None, ax=None):
         """Plot norm phase, one plot per antenna"""
@@ -173,6 +180,7 @@ class BPSols():
 
         ax.set_ylim(-203,203)
         ax.set_xlim(1.22,1.53)
+        return fig, ax
 
 
 class GainSols():
@@ -233,6 +241,18 @@ class GainSols():
             self.time = np.full((2),np.nan)
             self.flags = np.full((12,2,2),np.nan)
 
+    def get_ant_gains(self, ant='RT3'):
+        """ return time, [XX,YY] amp, [XX, YY] phase for a given ANT name """
+        a = self.ants.index(ant)
+        return self.time, self.amp[a,:,:], self.phase[a,:,:]
+
+    def get_gains(self):
+        """ return dictionary {ant_name: [time, amp_XX_YY, phase_XX_YY]} """
+        res = dict()
+        for antname in self.ants:
+            tap = self.get_ant_gains(ant=antname)
+            res.update({antname:tap})
+        return res
 
     def normalize(self, other):
         """ divide by the other solutions """
@@ -268,19 +288,16 @@ class GainSols():
             p2 = other.phase
             t = t1
 
-
-
         amp_norm = a1 / a2
         phase_norm = p1 - p2
 
         return t/60, amp_norm, phase_norm
 
-    def plot_amp(self, imagepath=None):
+    def plot_amp(self, ants=['RT3'], imagepath=None):
         """Plot amplitude, one plot per antenna"""
 
         logging.info("Creating plots for gain amplitude")
-        ant_names = self.ants
-        for a,ant in enumerate(ant_names[1:2]):
+        for a, ant in enumerate(ants):
             plt.figure(figsize=(4,3))
             plt.suptitle('Gain amplitude for Antenna {0}'.format(ant))
             plt.scatter(self.time,self.amp[a,:,0],
@@ -292,13 +309,11 @@ class GainSols():
             plt.ylim(10,30)
             plt.legend(markerscale=3,fontsize=14)
 
-    def plot_phase(self, imagepath=None):
+    def plot_phase(self, ants=['RT3'], imagepath=None):
         """Plot phase, one plot per antenna"""
 
         logging.info("Creating plots for gain phase")
-
-        ant_names = self.ants
-        for a, ant in enumerate(ant_names[1:2]):
+        for a, ant in enumerate(ants):
             plt.figure(figsize=(4,3))
             plt.suptitle('Gain phase for Antenna {0}'.format(ant))
             plt.scatter(self.time,self.phase[a,:,0],
@@ -328,6 +343,7 @@ class GainSols():
                    marker=',',s=5)
         ax.set_ylim(0.18, 2.48)
         # print "AMP SHAPE:", amp_norm.shape
+        return fig, ax
 
     def plot_norm_phase(self, other, ant='RT3', imagepath=None, ax=None):
         """Plot norm phase, one plot per antenna"""
@@ -350,24 +366,6 @@ class GainSols():
 
         ax.set_ylim(-203, 203)
         # ax.set_xlim(1.22,1.53)
+        return fig, ax
 
-# test
-
-a = BPSols('/home/kutkin/tmp/tmp/190807041_B03_3C147.Bscan')
-a.plot_amp()
-# a.plot_phase()
-# plt.text(1.29, 1.65, '190807041')
-# a.plot_phase()
-# b = BPSols('/home/kutkin/apertif/pro/test_data/B03_3C196.Bscan')
-# a.plot_norm_phase(b)
-
-# a = GainSols('/home/kutkin/apertif/pro/test_data/B01_3C138.G1ap')
-
-# a0 = GainSols('/home/kutkin/tmp/tmp/3C147.G1ap')
-# a = GainSols('/home/kutkin/apertif/pro/test_data/3C196.G1ap')
-# b = GainSols('/home/kutkin/apertif/pro/test_data/B03_3C138.G1ap')
-
-# a = GainSols('/home/kutkin/tmp/tmp/B03_3C147.G1ap')
-# b = GainSols('/home/kutkin/tmp/tmp/B00_3C147.G1ap')
-# print a.amp.shape, b.amp.shape
-# a.plot_norm_amp(b)
+# for test see plot_sols script

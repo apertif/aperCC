@@ -13,6 +13,7 @@ import glob
 import os
 import re
 import matplotlib.pyplot as plt
+import pickle as pkl
 
 # def b2b(beams='all'):
 #     """
@@ -32,7 +33,7 @@ def get_fluxcal(obsid):
 
 
 def get_beam_num(pathstring):
-    """return a string defining the beam number"""
+    """return a string defining the beam number from a path"""
     beamnum = re.findall('/(\d{2})/', pathstring)
     if beamnum:
         return beamnum[0]
@@ -42,7 +43,8 @@ def get_beam_num(pathstring):
 
 def bpbeam(taskid, src, ants='all', datapath=None, plots=True):
     """
-    Plot bandpass amplitude and phase per beam normalized by beam#00
+    Get the gains {beam: [taskid, starttime, src, gains_data]}, and
+    [plot] bandpass amplitude and phase per beam normalized by beam#00
     """
     SD = ScanData(taskid, src, base_dir=datapath, search_all_nodes=True)
     # print SD.get_bpasstable(0)
@@ -63,7 +65,7 @@ def bpbeam(taskid, src, ants='all', datapath=None, plots=True):
     elif type(ants) is list:
         antlist = ants
 
-    # beamdict = dict()
+    res = dict()
     # antdict = dict()
     if plots:
         figs_amp = [plt.figure(figsize=(xsize,ysize)) for _ in antlist]
@@ -71,6 +73,9 @@ def bpbeam(taskid, src, ants='all', datapath=None, plots=True):
     for bp in bps:
         beamnum = int(get_beam_num(bp))
         BP = BPSols(bp)
+        starttime = BP.time[0]
+        bpdata = BP.get_bpass()
+        res.update({beamnum:[taskid, starttime, src, bpdata]})
         for aind, ant in enumerate(antlist):
             if plots:
                 fig1 = figs_amp[aind]
@@ -92,20 +97,15 @@ def bpbeam(taskid, src, ants='all', datapath=None, plots=True):
             fig1.savefig('{}_BP_amp_{}.png'.format(taskid, ant))
             fig2.savefig('{}_BP_phase_{}.png'.format(taskid, ant))
 
-        # antdict.update({ant:beamdict})
-    # res = {taskid:[src, start_time, BP.freq, antdict]}
-
-    # return res
+    return res
 
 
 def gbeam(taskid, src, ants='all', datapath=None, plots=False):
     """
-    Get the gains for taskid->beam->antenna and
+    Get the gains {beam: [taskid, starttime, src, gains_data]}, and
     [plot] gains amplitude and phase per beam normalized by beam 00
     """
     SD = ScanData(taskid, src, base_dir=datapath, search_all_nodes=True)
-    # print SD.get_gaintable(0)
-
     G0 = GainSols(SD.get_gaintable(0))
     bps = SD.get_gaintable()
     start_time = G0.t0.isoformat()[:10] + ' ' + G0.t0.isoformat()[11:16]
@@ -124,9 +124,14 @@ def gbeam(taskid, src, ants='all', datapath=None, plots=False):
         figs_amp = [plt.figure(figsize=(xsize,ysize)) for _ in antlist]
         figs_phase = [plt.figure(figsize=(xsize,ysize)) for _ in antlist]
 
+    res = dict()
     for bp in bps:
         beamnum = int(get_beam_num(bp))
         G = GainSols(bp)
+        starttime = G.time[0]
+        gdata = G.get_gains()
+        res.update({beamnum:[taskid, starttime, src, gdata]})
+
         for aind, ant in enumerate(antlist):
             if plots:
                 fig1 = figs_amp[aind]
@@ -153,13 +158,15 @@ def gbeam(taskid, src, ants='all', datapath=None, plots=False):
             fig1.savefig('{}_G_amp_{}.png'.format(taskid, ant))
             fig2.savefig('{}_G_phase_{}.png'.format(taskid, ant))
 
-
+    return res
 
 
 
 if __name__ == "__main__":
 
     tasks = [
+            '190913046',
+            '190913045',
             '190809041',
             '190808041',
             '190807042',
@@ -184,27 +191,20 @@ if __name__ == "__main__":
             '190712041',
             '190711169',
             '190701042',
-            '190701001'
+            '190701001',
             ]
 
-    for task in tasks[-1:]:
+    bpdata = []
+    gdata = []
+    for task in tasks[:]:
         fluxcal = get_fluxcal(task)
         print task, fluxcal
+
         if fluxcal is not None:
-            # try:
-            res = bpbeam(task, fluxcal, ants=['RT3', 'RT4'], plots=True)
-            # x = res[res.keys()[0]][3]
-            # print x['RT3'][1][0]
-            # plt.plot(res[res.keys()[0]][2][0,:], x['RT3'][1][0][0].T[0,:])
-            # plt.show()
-                # gbeam(task, fluxcal, ants='all')
-            # except:
-                # pass
+            bp = bpbeam(task, fluxcal, ants=['RT3'], plots=False)
+            gn = gbeam(task, fluxcal, ants=['RT3'], plots=False)
+            bpdata.append(bp)
+            gdata.append(gn)
 
-
-
-
-
-    # src = '3C196'
-    # datapath = '/data/apertif/'
-
+    with open('ccdata.pkl', 'wb') as inp:
+        pkl.dump((bpdata, gdata), inp)
